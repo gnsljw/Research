@@ -1,0 +1,325 @@
+---
+title: "FNA result according to tumor size"
+author: "JW Yi"
+output: html_document
+---
+# FNA data preperation
+```{r,echo=FALSE}
+library(epiR)
+library(epitools)
+library(gmodels)
+fna <- read.table("D://Work/FNA.txt", header=T, sep='\t')
+fna$Category <- factor(fna$FNA, levels=c(2,3,4,5,6), labels = c("Benign","AUS","FN","Suspicious","Malignant"))
+summary(fna)
+attach(fna)
+```
+
+# Size Distribution
+```{r}
+Size.cat <- function(x, lower=0, upper, by=1, sep="-", above.char=">") {
+     labs <- c(paste(seq(lower, upper - by , by=by), 
+                     seq(lower + by , upper , by=by),
+                     sep=sep),
+               paste(upper, above.char, sep=""))
+     cut(x, breaks=c(seq(lower, upper, by=by), Inf), right=FALSE, labels=labs)
+}
+
+Size.freq <- table(Size.cat(fna$Size, upper=4))
+
+library(RColorBrewer)
+col <- brewer.pal(5, "Set1")
+
+b <- barplot(Size.freq, main="Size Distribution", col=col, xlab = "Tumor Size", ylab="Number of Observations", ylim=c(0,100))
+text(x = b, y = Size.freq, labels= c(83, 90, 47, 16, 15), pos=3, cex=1.0, col="red")
+box()
+```
+
+# Cross Table Analysis
+## Data Preperation
+```{r}
+FNA.binary4 <- ifelse(fna$FNA >= 4, "Malignant", "Benign")
+FNA.binary4 <- as.factor(FNA.binary4)
+FNA.binary5 <- ifelse(fna$FNA >= 5, "Malignant", "Benign")
+FNA.binary5 <- as.factor(FNA.binary5)
+FNA.binary6 <- ifelse(fna$FNA >= 6, "Malignant", "Benign")
+FNA.binary6 <- as.factor(FNA.binary6)
+
+Size.binary1 <- ifelse(fna$Size <= 1, "< 1cm", ">= 1cm")
+Size.binary1 <- as.factor(Size.binary1)
+Size.binary2 <- ifelse(fna$Size <= 2, "< 2cm", ">= 2cm")
+Size.binary2 <- as.factor(Size.binary2)
+Size.binary3 <- ifelse(fna$Size <= 3, "< 3cm", ">= 3cm")
+Size.binary3 <- as.factor(Size.binary3)
+
+summary(FNA.binary4)
+summary(FNA.binary5)
+summary(FNA.binary6)
+summary(Size.binary1)
+summary(Size.binary2)
+summary(Size.binary3)
+```
+
+## FNA borderline : 4, Size 1cm, 2cm, 3cm
+```{r}
+t.4.1 <- table (FNA.binary4, Size.binary1)
+t.4.1
+oddsratio(t.4.1)
+```
+OR 0.774, p-value 0.379
+```{r}
+t.4.2 <- table(FNA.binary4, Size.binary2)
+t.4.2
+oddsratio(t.4.2)
+```
+OR 0.764, p-value 0.383
+```{r}
+t.4.3 <- table(FNA.binary4, Size.binary3)
+t.4.3
+oddsratio(t.4.3)
+```
+OR 0.293, p-value 0.002 **
+
+## FNA borderline : 5, Size 1cm, 2cm, 3cm
+```{r}
+t.5.1 <- table(FNA.binary5, Size.binary1)
+t.5.1
+oddsratio(t.5.1)
+```
+OR 0.570, p-value 0.032 **
+```{r}
+t.5.2 <- table(FNA.binary5, Size.binary2)
+t.5.2
+oddsratio(t.5.2)
+```
+OR 0.485, p-value 0.012 **
+```{r}
+t.5.3 <- table(FNA.binary5, Size.binary3)
+t.5.3
+oddsratio(t.5.3)
+```
+OR 0.273, p-value 0.004 ** 
+
+## FNA borderline : 6, Size 1cm, 2cm, 3cm
+```{r}
+t.6.1 <- table(FNA.binary6, Size.binary1)
+t.6.1
+oddsratio(t.6.1)
+```
+OR 0.432, p-value 0.009 **
+```{r}
+t.6.2 <- table(FNA.binary6, Size.binary2)
+t.6.2
+oddsratio(t.6.2)
+```
+OR 0.688, p-value 0.320 
+```{r}
+t.6.3 <- table(FNA.binary6, Size.binary3)
+t.6.3
+oddsratio(t.6.3)
+```
+OR 0.792, p-value 0.794 (Fisher)
+
+## Summary
+```{r}
+a <- c(oddsratio(t.4.1)[[3]][6], oddsratio(t.4.1)[[2]][2], oddsratio(t.4.1)[[2]][4],oddsratio(t.4.1)[[2]][6])
+b <- c(oddsratio(t.4.2)[[3]][6], oddsratio(t.4.2)[[2]][2], oddsratio(t.4.2)[[2]][4],oddsratio(t.4.1)[[2]][6])
+c <- c(oddsratio(t.4.3)[[3]][6], oddsratio(t.4.3)[[2]][2], oddsratio(t.4.3)[[2]][4],oddsratio(t.4.1)[[2]][6])
+d <- c(oddsratio(t.5.1)[[3]][6], oddsratio(t.5.1)[[2]][2], oddsratio(t.5.1)[[2]][4],oddsratio(t.5.1)[[2]][6])
+e <- c(oddsratio(t.5.2)[[3]][6], oddsratio(t.5.2)[[2]][2], oddsratio(t.5.2)[[2]][4],oddsratio(t.5.1)[[2]][6])
+f <- c(oddsratio(t.5.3)[[3]][6], oddsratio(t.5.3)[[2]][2], oddsratio(t.5.3)[[2]][4],oddsratio(t.5.1)[[2]][6])
+g <- c(oddsratio(t.6.1)[[3]][6], oddsratio(t.6.1)[[2]][2], oddsratio(t.6.1)[[2]][4],oddsratio(t.6.1)[[2]][6])
+h <- c(oddsratio(t.6.2)[[3]][6], oddsratio(t.6.2)[[2]][2], oddsratio(t.6.2)[[2]][4],oddsratio(t.6.1)[[2]][6])
+i <- c(oddsratio(t.6.3)[[3]][4], oddsratio(t.6.3)[[2]][2], oddsratio(t.6.3)[[2]][4],oddsratio(t.6.1)[[2]][6]) # Fisher
+result.final1 <- rbind (a,b,c,d,e,f,g,h,i)
+colnames(result.final1) <- c("p-value", "Odds Ratio", "CI upper", "CI lower")
+rownames(result.final1) <- c("FNA 4, Size 1", "FNA 4, Size 2", "FNA 4, Size 3*", 
+                            "FNA 5, Size 1*", "FNA 5, Size 2*", "FNA 5, Size 3*",
+                            "FNA 6, Size 1*", "FNA 6, Size 2", "FNA 6, Size 3")
+result.final1
+```
+
+# Simple Linear Regression
+```{r}
+fit1 <- lm(FNA ~ Size, data=fna)
+summary(fit1)
+
+plot(Size, FNA, main = "Correlation Between \n Tumor Size and FNA Caterogy", pch=20, col="blue")
+abline(fit1, col="red")
+text(5, 2.5, "Coefficients = -0.229\n p-value=0.000608")
+```
+
+# Logistic Regression
+## Binary FNA vs Continuous Size
+```{r}
+fit4 <- glm(FNA.binary4 ~ fna$Size, family="binomial")
+summary(fit4)
+exp(fit4$coeff) # odds ratio
+exp(confint(fit4))  # Conf. interval
+
+pval <- summary(fit4)$coefficients[8]
+or <- exp(fit4$coeff)[[2]]
+cilow <- exp(confint(fit4))[[2]]
+ciup <- exp(confint(fit4))[[4]]
+result.4 <- cbind(pval, or, cilow, ciup)
+
+fit5 <- glm(FNA.binary5 ~ fna$Size, family="binomial")
+summary(fit5)
+exp(fit5$coeff) # odds ratio
+exp(confint(fit5))  # Conf. interval
+
+pval <- summary(fit5)$coefficients[8]
+or <- exp(fit5$coeff)[[2]]
+cilow <- exp(confint(fit5))[[2]]
+ciup <- exp(confint(fit5))[[4]]
+result.5 <- cbind(pval, or, cilow, ciup)
+
+fit6 <- glm(FNA.binary6 ~ fna$Size, family="binomial")
+summary(fit6)
+exp(fit6$coeff) # odds ratio
+exp(confint(fit6))  # Conf. interval
+
+pval <- summary(fit6)$coefficients[8]
+or <- exp(fit6$coeff)[[2]]
+cilow <- exp(confint(fit6))[[2]]
+ciup <- exp(confint(fit6))[[4]]
+result.6 <- cbind(pval, or, cilow, ciup)
+
+result.final3 <- rbind(result.4, result.5, result.6)
+rownames(result.final3) <- c("FNA4*","FNA5*","FNA6")
+colnames(result.final3) <- c("p-value","Odds Ratio","CI lower", "CI upper")
+
+```
+
+## Binary FNA vs Binary Size
+```{r}
+fit4.1 <- glm(FNA.binary4 ~ Size.binary1, family="binomial")
+summary(fit4.1)
+exp(fit4.1$coeff) # odds ratio
+exp(confint(fit4.1))  # Conf. interval
+
+pval <- summary(fit4.1)$coefficients[8]
+or <- exp(fit4.1$coeff)[[2]]
+cilow <- exp(confint(fit4.1))[[2]]
+ciup <- exp(confint(fit4.1))[[4]]
+result.4.1 <- cbind(pval, or, cilow, ciup)
+
+fit4.2 <- glm(FNA.binary4 ~ Size.binary2, family="binomial")
+summary(fit4.2)
+exp(fit4.2$coeff) # odds ratio
+exp(confint(fit4.2))  # Conf. interval
+
+pval <- summary(fit4.2)$coefficients[8]
+or <- exp(fit4.2$coeff)[[2]]
+cilow <- exp(confint(fit4.2))[[2]]
+ciup <- exp(confint(fit4.2))[[4]]
+result.4.2 <- cbind(pval, or, cilow, ciup)
+
+fit4.3 <- glm(FNA.binary4 ~ Size.binary3, family="binomial")
+summary(fit4.3)
+exp(fit4.3$coeff) # odds ratio
+exp(confint(fit4.3))  # Conf. interval
+
+pval <- summary(fit4.3)$coefficients[8]
+or <- exp(fit4.3$coeff)[[2]]
+cilow <- exp(confint(fit4.3))[[2]]
+ciup <- exp(confint(fit4.3))[[4]]
+result.4.3 <- cbind(pval, or, cilow, ciup)
+
+fit5.1 <- glm(FNA.binary5 ~ Size.binary1, family="binomial")
+summary(fit5.1)
+exp(fit5.1$coeff) # odds ratio
+exp(confint(fit5.1))  # Conf. interval
+
+pval <- summary(fit5.1)$coefficients[8]
+or <- exp(fit5.1$coeff)[[2]]
+cilow <- exp(confint(fit5.1))[[2]]
+ciup <- exp(confint(fit5.1))[[4]]
+result.5.1 <- cbind(pval, or, cilow, ciup)
+
+fit5.2 <- glm(FNA.binary5 ~ Size.binary2, family="binomial")
+summary(fit5.2)
+exp(fit5.2$coeff) # odds ratio
+exp(confint(fit5.2))  # Conf. interval
+
+pval <- summary(fit5.2)$coefficients[8]
+or <- exp(fit5.2$coeff)[[2]]
+cilow <- exp(confint(fit5.2))[[2]]
+ciup <- exp(confint(fit5.2))[[4]]
+result.5.2 <- cbind(pval, or, cilow, ciup)
+
+fit5.3 <- glm(FNA.binary5 ~ Size.binary3, family="binomial")
+summary(fit5.3)
+exp(fit5.3$coeff) # odds ratio
+exp(confint(fit5.3))  # Conf. interval
+
+pval <- summary(fit5.3)$coefficients[8]
+or <- exp(fit5.3$coeff)[[2]]
+cilow <- exp(confint(fit5.3))[[2]]
+ciup <- exp(confint(fit5.3))[[4]]
+result.5.3 <- cbind(pval, or, cilow, ciup)
+
+fit6.1 <- glm(FNA.binary6 ~ Size.binary1, family="binomial")
+summary(fit6.1)
+exp(fit6.1$coeff) # odds ratio
+exp(confint(fit6.1))  # Conf. interval
+
+pval <- summary(fit6.1)$coefficients[8]
+or <- exp(fit6.1$coeff)[[2]]
+cilow <- exp(confint(fit6.1))[[2]]
+ciup <- exp(confint(fit6.1))[[4]]
+result.6.1 <- cbind(pval, or, cilow, ciup)
+
+fit6.2 <- glm(FNA.binary6 ~ Size.binary2, family="binomial")
+summary(fit6.2)
+exp(fit6.2$coeff) # odds ratio
+exp(confint(fit6.2))  # Conf. interval
+
+pval <- summary(fit6.2)$coefficients[8]
+or <- exp(fit6.2$coeff)[[2]]
+cilow <- exp(confint(fit6.2))[[2]]
+ciup <- exp(confint(fit6.2))[[4]]
+result.6.2 <- cbind(pval, or, cilow, ciup)
+
+fit6.3 <- glm(FNA.binary6 ~ Size.binary3, family="binomial")
+summary(fit6.3)
+exp(fit6.3$coeff) # odds ratio
+exp(confint(fit6.3))  # Conf. interval
+
+pval <- summary(fit6.3)$coefficients[8]
+or <- exp(fit6.3$coeff)[[2]]
+cilow <- exp(confint(fit6.3))[[2]]
+ciup <- exp(confint(fit6.3))[[4]]
+result.6.3 <- cbind(pval, or, cilow, ciup)
+
+result.final2 <- rbind(result.4.1, result.4.2, result.4.3, result.5.1, result.5.2, result.5.3, 
+                      result.6.1, result.6.2, result.6.3)
+rownames(result.final2) <- c("FNA 4, Size 1", "FNA 4, Size 2", "FNA 4, Size 3*", 
+                            "FNA 5, Size 1*", "FNA 5, Size 2*", "FNA 5, Size 3*",
+                            "FNA 6, Size 1*", "FNA 6, Size 2", "FNA 6, Size 3")
+colnames(result.final2) <- c("p-value", "Odds Ratio", "CI lower", "CI upper")
+result.final2
+```
+
+# Final Result
+## Chi-square analysis
+```{r}
+result.final1
+```
+
+## Logistric Regression (Binary FNA, Binary Size)
+```{r}
+result.final2
+```
+
+## Linear Regression (All FNA, Continuous Size)
+```{r}
+plot(Size, FNA, main = "Correlation Between \n Tumor Size and FNA Caterogy", pch=20, col="blue")
+abline(fit1, col="red")
+text(5, 2.5, "Coefficients = -0.229\n p-value=0.000608")
+```
+
+## Logistic Regression (Binary FNA, Continuous Size)
+```{r}
+result.final3
+```
+
