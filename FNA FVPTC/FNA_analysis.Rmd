@@ -1,0 +1,109 @@
+---
+title: "Diagnostic Accuracy of FNA for FVPTC"
+author: "JW Yi"
+date: "Tuesday, November 04, 2014"
+output: html_document
+---
+
+# Read dataset and load libraries.
+
+```{r, echo=FALSE, results='hide'}
+library(reshape2); library(dplyr); library(epiR); library(epitools); library(gmodels); library(RColorBrewer)
+dat <- readRDS("D://Work/FNA/FNA_data.rds")
+fna.df <- tbl_df(dat)
+fna.df
+```
+
+# Summary Statistics according to FNA binary results.
+
+```{r}
+Benign_group <- filter(fna.df, FNA_binary == "Benign(2,3,4)")
+Malignant_group <- filter(fna.df, FNA_binary == "Malignant(5,6)")
+```
+
+* FNA 2,3,4 group summary  
+```{r}
+summary(Benign_group)
+```
+
+* FNA 5,6 group summary   
+```{r}
+summary(Malignant_group)
+```
+    
+# Linear Regression Model
+## Univariable Linear Regression
+```{r}
+slr1 <- lm(FNA ~ Sex, data=fna.df)
+round(summary(slr1)$coef, 3)
+slr2 <- lm(FNA ~ Age, data=fna.df)
+round(summary(slr2)$coef, 3)
+slr3 <- lm(FNA ~ USG, data=fna.df)
+round(summary(slr3)$coef, 3)
+slr4 <- lm(FNA ~ Size, data=fna.df)
+round(summary(slr4)$coef, 3)
+```
+
+## Multivariable Linear Regression
+```{r}
+fit1 <- lm(FNA ~ Sex + Age + USG + Size, data=fna.df)
+round(summary(fit1)$coef, 3)
+step(fit1)
+fit1.reduced <- lm(FNA ~ USG + Size, data=fna.df)
+round(summary(fit1.reduced)$coef, 3)
+```
+
+# Logistic Regression with binary FNA category
+## Univariable Logistic Regression
+```{r}
+logit1 <- glm(FNA_binary ~ Sex, family="binomial", data=fna.df)
+round(summary(logit1)$coef, 3)
+logit2 <- glm(FNA_binary ~ Age, family="binomial", data=fna.df)
+round(summary(logit2)$coef, 3)
+logit3 <- glm(FNA_binary ~ USG, family="binomial", data=fna.df)
+round(summary(logit3)$coef, 3)
+logit4 <- glm(FNA_binary ~ Size, family="binomial", data=fna.df)
+round(summary(logit4)$coef, 3)
+```
+
+## Multivariable Logistic Regression
+```{r}
+logit.all <- glm(FNA_binary ~ Sex + Age + USG + Size, family="binomial", data=fna.df)
+summary(logit.all)
+step(logit.all)
+logit.reduced <- glm(FNA_binary ~ Sex + USG + Size, family = "binomial", data = fna.df)
+summary(logit.reduced)
+cbind(OR = exp(logit.reduced$coef), exp(confint(logit.reduced)))
+```
+
+# Plot
+
+* Barplot  
+
+```{r, echo=FALSE}
+col <- brewer.pal(5, "Set1")
+tx <- table(fna.df$FNA_binary, fna.df$Size_range)
+b <- barplot(tx, legend.text = rownames(tx), col=col[2:1], ylim=c(0, 120))
+text(0.7, 25, "51")
+text(0.7, 80, "64")
+text(1.9, 25, "52")
+text(1.9, 75, "45")
+text(3.1, 10, "20")
+text(3.1, 30, "18")
+text(4.3, 10, "18")
+text(4.3, 30, "5")
+box()
+```
+
+* Dotchart   
+
+```{r, echo=FALSE}
+dotchart(tx, col=col[2:1])
+```
+
+* Stripchart   
+
+```{r, echo=FALSE}
+stripchart(Size ~ FNA, method="jitter", vertical=TRUE, data=fna.df, pch=16, col=col, xlab="FNA")
+abline(slr4, col="salmon")
+```
