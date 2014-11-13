@@ -1,0 +1,153 @@
+---
+title: "Correlation Between QT/QTc Interval and Calcium"
+author: "JW Yi"
+highlighter: highlight.js
+output: word_document
+job: null
+knit: slidify::knit2slides
+mode: selfcontained
+hitheme: tomorrow
+subtitle: null
+framework: io2012
+widgets: bootsrtap
+---
+
+
+## Calcium, iCalcium, PTH, P vs QT/QTc 
+
+- For developing calcium level prediction model from the ECG wave, we initially analyzed correlation between lab data and ECG data, used in SNUH.
+
+---
+
+## Data Preperation
+
+```{r}  
+qtdata <- read.delim("C://Work/QTcalcium/QT data.txt", header=T, na.strings="NA")
+dim(qtdata)
+head(qtdata)
+```  
+
+---   
+
+## Pairs Plot  
+
+```{r, echo=FALSE}  
+pairs(qtdata, col="blue")
+```  
+
+---   
+
+## QT Intreval according to Calcium   
+
+```{r}
+Ca_QT_Fit <- lm(QT ~ Calcium, data=qtdata)
+summary(Ca_QT_Fit)
+```
+
+---     
+
+## QT Intreval according to Ionized Calcium     
+
+```{r}
+iCa_QT_Fit <- lm(QT ~ iCalcium, data=qtdata)
+summary(iCa_QT_Fit)
+```
+
+---   
+
+## QT Intreval according to PTH    
+
+```{r}
+PTH_QT_Fit <- lm(QT ~ PTH, data=qtdata)
+summary(PTH_QT_Fit)
+```
+
+---   
+
+## QT Intreval according to Phosphate  
+
+```{r}
+P_QT_Fit <- lm(QT ~ Phosphate, data=qtdata)
+summary(P_QT_Fit)
+```
+
+---   
+  
+## QTc Intreval according to Calcium   
+
+```{r}
+Ca_QTc_Fit <- lm(QTc ~ Calcium, data=qtdata)
+summary(Ca_QTc_Fit)
+```
+
+---      
+
+## QTc Intreval according to Ionized Calcium   
+
+```{r}
+iCa_QTc_Fit <- lm(QTc ~ iCalcium, data=qtdata)
+summary(iCa_QTc_Fit)
+```
+---   
+
+## QTc Intreval according to PTH    
+
+```{r}
+PTH_QTc_Fit <- lm(QTc ~ PTH, data=qtdata)
+summary(PTH_QTc_Fit)
+```
+
+---   
+
+## QTc Intreval according to Phosphate    
+
+```{r}
+P_QTc_Fit <- lm(QTc ~ Phosphate, data=qtdata)
+summary(P_QTc_Fit)
+```
+
+---     
+
+## Correlation Plots    
+
+```{r, echo=FALSE}
+library(ggplot2)
+library(gridExtra)
+g1 <- ggplot(qtdata, aes(Calcium, QT))
+g1 <- g1 + geom_point(color="blue", size=3, alpha=1/2) +
+    geom_smooth(method="lm") +
+    labs(title="QT interval and Calcium", 
+         x="Calcium", y="QT interval")
+
+g2 <- ggplot(qtdata, aes(iCalcium, QT))
+g2 <- g2 + geom_point(color="blue", size=3, alpha=1/2) +
+    geom_smooth(method="lm") +
+    labs(title="QT interval and ionized Calcium", 
+         x="Ionized Calcium", y="QT interval")
+
+g3 <- ggplot(qtdata, aes(Calcium, QTc))
+g3 <- g3 + geom_point(color="red", size=3, alpha=1/2) +
+    geom_smooth(method="lm") +
+    labs(title="QTc interval and Calcium", 
+         x="Calcium", y="QTc interval")
+
+g4 <- ggplot(qtdata, aes(iCalcium, QTc))
+g4 <- g4 + geom_point(color="red", size=3, alpha=1/2) +
+    geom_smooth(method="lm") +
+    labs(title="QTc interval and ionized Calcium", 
+         x="Ionized Calcium", y="QTc interval")
+
+grid.arrange(g1, g2, g3, g4)
+```
+
+---   
+
+## Further Tasks      
+ 
+- Collect more data for making prediction model. 
+- Data seperation into training and testing samples.
+- Make prediction model for estimate calcium level from the ECG data.
+- Apply this model on real ECG data.
+
+---    
+
