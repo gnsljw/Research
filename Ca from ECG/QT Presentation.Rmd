@@ -1,0 +1,252 @@
+---
+title: "Estimating Calcium Level From QT Interval"
+author: "JW Yi"
+date: "Sunday, December 14, 2014"
+output: beamer_presentation
+---
+
+## Estimating Calcium Level From QT/QTc Interval
+
+- Hypocalcemia is an important post operative complication after thyroid surgery.
+- Still, we can only measure calcium level by patient's blood.
+- Acute hypocalcemia causes prolongation of the QT interval.
+- Can we infer the blood calcium level from the QT interval?
+
+## Load prepaired data.
+```{r}
+patients <- read.csv("D://Work/QTcalcium/20141214/QT calcium.csv")
+head(patients, 3)
+```
+
+## Convert initial data into long format.
+```{r}
+qtdata <- read.csv("D://Work/QTcalcium/20141214/QT calcium Long Format.csv")
+head(qtdata)
+```
+
+## Summary Statistics.
+```{r}
+summary(qtdata)
+library(caret); library(gridExtra)
+```
+
+## Analysis From Machine Data
+
+- ECG machine automatically displays QT and QTc interval. 
+- Can we trust this interval?
+
+## QT/QTc From ECG Machine VS Electrolytes.
+```{r, echo=FALSE, fig.width=8, fig.height=8}
+featurePlot(x = qtdata[,2:3], y = qtdata[,7:10], plot="pairs")
+```
+
+## Linear Regression Analysis, Machine QT vs Calcium
+```{r}
+Ca_QT_M_Fit <- lm(QT_M ~ Ca, data=qtdata)
+summary(Ca_QT_M_Fit)
+```
+
+## Linear Regression Analysis, Machine QT vs Ionized Calcium
+```{r}
+iCa_QT_M_Fit <- lm(QT_M ~ iCa, data=qtdata)
+summary(iCa_QT_M_Fit)
+```
+
+## Linear Regression Analysis, Machine QTc vs Calcium
+```{r}
+Ca_QTc_M_Fit <- lm(QTc_M ~ Ca, data=qtdata)
+summary(Ca_QTc_M_Fit)
+```
+
+## Linear Regression Analysis, Machine QTc vs Ionized Calcium
+```{r}
+iCa_QTc_M_Fit <- lm(QTc_M ~ iCa, data=qtdata)
+summary(iCa_QTc_M_Fit)
+```
+
+## Relationship between Machine QT/QTc and Ca/iCa 
+
+- Have Significant p-values (under 0.05) but slopes were positive.
+- This is the opposing result from the basic calcium vs QT interval therory. 
+- We cannot trust QT/QTc from the ECG machine.
+
+## Analysis From Cardiologist's data
+
+- Cardiologist have re-calculated QT and QTc interval manually. 
+- Can we trust him? 
+
+## QT/QTc From Cardiologists VS Electrolytes.
+```{r, echo=FALSE, fig.width=8, fig.height=8}
+featurePlot(x = qtdata[,4:5], y = qtdata[,7:10], plot="pairs")
+```
+
+## Linear Regression Analysis, Cardiologist's QT vs Calcium
+```{r}
+Ca_QT_C_Fit <- lm(QT_C ~ Ca, data=qtdata)
+summary(Ca_QT_C_Fit)
+```
+
+## Linear Regression Analysis, Cardiologist's QT vs Ionized Calcium
+```{r}
+iCa_QT_C_Fit <- lm(QT_C ~ iCa, data=qtdata)
+summary(iCa_QT_C_Fit)
+```
+
+## Linear Regression Analysis, Cardiologist's QTc vs Calcium
+```{r}
+Ca_QTc_C_Fit <- lm(QTc_C ~ Ca, data=qtdata)
+summary(Ca_QTc_C_Fit)
+```
+
+## Linear Regression Analysis, Cardiologist's QTc vs Ionized Calcium
+```{r}
+iCa_QTc_C_Fit <- lm(QTc_C ~ iCa, data=qtdata)
+summary(iCa_QTc_C_Fit)
+```
+
+## Correlation Plot
+```{r, echo=FALSE, warning=FALSE, fig.width=8, fig.height=8}
+g1 <- ggplot(qtdata, aes(QT_C, Ca))
+g1 <- g1 + geom_point(color="blue", size=3, alpha=1/2) +
+    geom_smooth(method="lm") +
+    labs(title="QT vs Calcium\np-value=0.0191\nslope=-2.391", 
+         x="QT interval", y="Calcium")
+
+g2 <- ggplot(qtdata, aes(QT_C, iCa))
+g2 <- g2 + geom_point(color="blue", size=3, alpha=1/2) +
+    geom_smooth(method="lm") +
+    labs(title="QT vs ionized Calcium\np-value=0.0276\nslope=-2.244", 
+         x="QT interval", y="Ionized Calcium")
+
+g3 <- ggplot(qtdata, aes(QTc_C, Ca))
+g3 <- g3 + geom_point(color="red", size=3, alpha=1/2) +
+    geom_smooth(method="lm") +
+    labs(title="QTc vs Calcium\np-value=2.08e-05\nslope=-4.521", 
+         x="QTc interval", y="Calcium")
+
+g4 <- ggplot(qtdata, aes(QTc_C, iCa))
+g4 <- g4 + geom_point(color="red", size=3, alpha=1/2) +
+    geom_smooth(method="lm") +
+    labs(title="QTc vs Ionized Calcium\np-value=3.6e-07\nslope=-5.544", 
+         x="QTc interval", y="Ionized Calcium")
+
+grid.arrange(g1, g2, g3, g4)
+```
+
+## Relationship between Cardiologist's QT/QTc and Ca/iCa 
+
+- Have Significant p-values (under 0.05) and negative slopes.
+- This result is appropriate to basic calcium vs QT interval therory. 
+- Cardiologit's interperations were amazing !
+
+
+## Changing QT/QTc Interval and Ca/iCa in each patients.
+
+- We need to check the changing QT/QTc and Calcium/ionized Calcium level during preop, POD#1 and POD#2.
+- We applied paired t-test and ANOVA among the three days in each patients.
+
+## QT interval change in each patients, Preop vs POD#1
+```{r}
+t.test(patients$QT_C_Pre, patients$QT_C_POD1, paired=TRUE)
+```
+
+## QT interval change in each patients, Preop vs POD#2
+```{r}
+t.test(patients$QT_C_Pre, patients$QT_C_POD2, paired=TRUE)
+```
+
+## QT interval change in each patients, POD#1 vs POD#2
+```{r}
+t.test(patients$QT_C_POD1, patients$QT_C_POD2, paired=TRUE)
+```
+
+## QT interval changes in each patients, ANOVA 
+```{r}
+qtdata2 <- read.csv("D://Work/QTcalcium/20141214/QT calcium for ANOVA.csv")
+aov.out1 <- aov(QT_C ~ Day, data=qtdata2)
+TukeyHSD(aov.out1)
+```
+
+## QTc interval change in each patients, Preop vs POD#1
+```{r}
+t.test(patients$QTc_C_Pre, patients$QTc_C_POD1, paired=TRUE)
+```
+
+## QTc interval change in each patients, Preop vs POD#2
+```{r}
+t.test(patients$QTc_C_Pre, patients$QTc_C_POD2, paired=TRUE)
+```
+
+## QTc interval change in each patients, POD#1 vs POD#2
+```{r}
+t.test(patients$QTc_C_POD1, patients$QTc_C_POD2, paired=TRUE)
+```
+
+## QTc interval changes in each patients, ANOVA test
+```{r}
+aov.out2 <- aov(QTc_C ~ Day, data=qtdata2)
+TukeyHSD(aov.out2)
+```
+
+## Post-Hoc Analysis, QTc interval changes
+```{r}
+plot(TukeyHSD(aov.out2))
+```
+
+## Caicium level change in each patients, Preop vs POD#1
+```{r}
+t.test(patients$Ca_Pre, patients$Ca_POD1, paired=TRUE)
+```
+
+## Caicium level change in each patients, Preop vs POD#2
+```{r}
+t.test(patients$Ca_Pre, patients$Ca_POD2, paired=TRUE)
+```
+
+## Caicium level change in each patients, POD#1 vs POD#2
+```{r}
+t.test(patients$Ca_POD1, patients$Ca_POD2, paired=TRUE)
+```
+
+## Calcium level changes in each patients, ANOVA test
+```{r}
+aov.out3 <- aov(Ca ~ Day, data=qtdata2)
+TukeyHSD(aov.out3)
+```
+
+## Post-Hoc Analysis, Calcium level changes
+```{r}
+plot(TukeyHSD(aov.out3))
+```
+
+## Ionized Caicium level change in each patients, Preop vs POD#1
+```{r}
+t.test(patients$iCa_Pre, patients$iCa_POD1, paired=TRUE)
+```
+
+## Ionized Caicium level change in each patients, Preop vs POD#2
+```{r}
+t.test(patients$iCa_Pre, patients$iCa_POD2, paired=TRUE)
+```
+
+## Ionized Caicium level change in each patients, POD#1 vs POD#2
+```{r}
+t.test(patients$iCa_POD1, patients$iCa_POD2, paired=TRUE)
+```
+
+## Ionized Calcium level changes in each patients, ANOVA test
+```{r}
+aov.out4 <- aov(iCa ~ Day, data=qtdata2)
+TukeyHSD(aov.out4)
+```
+
+## Post-Hoc Analysis, Ionized Calcium level changes
+```{r}
+plot(TukeyHSD(aov.out4))
+```
+
+## Summary 
+
+- There were significant QTc interval change in Preop vs POD#1 / Preop vs POD#2.
+- There were significant Ca and iCa change in Preop vs POD#1 / Preop vs POD#2.
+- Using QTc interval is appropriate for estimating Ca/iCa level. 
