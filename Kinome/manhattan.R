@@ -1,0 +1,11 @@
+library(qqman)
+results <- read.delim("D://Research/014 Kinome, PTMC/Work/kinomepvalue.txt")
+head(results)
+as.data.frame(table(results$CHR))
+manhattan(results, col=c("blue4","orange3"), las=2, cex=0.8, logp = T)
+
+par(mfrow=c(2,2))
+manhattan(subset(results, CHR == 1), main="Chr 1")
+manhattan(subset(results, CHR == 15), main="Chr 15")
+manhattan(subset(results, CHR == 16), main="Chr 16")
+manhattan(subset(results, CHR == 17), main="Chr 17")
